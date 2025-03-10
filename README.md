@@ -13,13 +13,13 @@ Functional extensionality is used in the category theory library for simplicity.
 
 # References
 
-Some references on the topic:
+Below are some references on the topic.
 
-Categories and types:
+**Categories and types**:
 - R. L. Crole, *Categories for Types. Roy L. Crole*. Cambridge: University Press, 1993.
 - C. A. Gunter, *Semantics of Programming Languages: Structures and Techniques*. Cambridge, Mass: MIT Press, 1993. 
 
-Coq: 
+**Coq**: 
 - [*Software Foundations*](https://softwarefoundations.cis.upenn.edu/)
 - [*Certified Programming with Dependent Types*](http://adam.chlipala.net/cpdt/)
 
