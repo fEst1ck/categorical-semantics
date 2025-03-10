@@ -248,14 +248,14 @@ Lemma subst_id {Γ : context}
 Proof.
   intros.
   dependent induction e; cbn; try (f_equal; eauto).
-  + simpl.
-    f_equal.
-    apply IHe.
-    intros.
-    dependent destruction x; simpl.
-    - reflexivity.
-    - rewrite H.
-      reflexivity. 
+  simpl.
+  f_equal.
+  apply IHe.
+  intros.
+  dependent destruction x; simpl.
+  + reflexivity.
+  + rewrite H.
+    reflexivity. 
 Qed.
 
 Definition exts_eq
