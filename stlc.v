@@ -169,14 +169,64 @@ Next Obligation.
     - eapply subst_one.
       + eassumption.
       + eassumption. *)
+
+(* Fixpoint subst1
+{Γ t1 t2}
+(var_to_term : ∀ t, contains (context_cons t1 Γ) t → term Γ t)
+
+
+(e1 : term (context_cons t1 Γ) t2) (e2 : term Γ t1) : term Γ t2.
+Proof.
+  dependent destruction e1.
+  + exact unit_term.
+  + apply pair_term.
+    - eapply subst1; eassumption.
+    - eapply subst1; eassumption.
+  + eapply fst_term.
+    eapply subst1; eassumption.
+  + eapply snd_term.
+    eapply subst1; eassumption.
+  + dependent destruction c.
+    - exact e2.
+    - refine (var_term c).
+  + eapply abs_term.
+    admit.
+  + eapply app_term; eapply subst1; eassumption.
+Admitted. *)
+
+  (* match e1 with
+  | unit_term => unit_term
+  | pair_term e1_1 e1_2 => pair_term (subst1 e1_1 e2) (subst1 e1_2 e2)
+  | fst_term e1 => fst_term (subst1 e1 e2)
+  | snd_term e1 => snd_term (subst1 e1 e2)
+  | var_term x => _
+  (* | var_term (var_succ var) => var_term var *)
+  | abs_term e1 => abs_term (subst1 e1 e2)
+  | app_term e1_1 e1_2 => app_term (subst1 e1_1 e2) (subst1 e1_2 e2)
+  end.
+Next Obligation. *)
+
 Definition shift_one {Γ t t'} (e : term Γ t) : term (context_cons t' Γ) t :=
   subst (fun _ var => (var_term (var_succ var))) e.
 
-Program Definition app {Γ t1 t2} (e1 : term (context_cons t1 Γ) t2) (e2 : term Γ t1) : term Γ t2 :=
+(* subst #0 with e, #(n + 1) with #n *)
+Program Definition subst1_map {Γ t}
+(e : term Γ t) :
+∀ t', contains (context_cons t Γ) t' → term Γ t' :=
+  fun _ var =>
+    match var with
+      | var_zero => e
+      | var_succ x => var_term x
+    end.
+
+(* Program Definition app {Γ t1 t2} (e1 : term (context_cons t1 Γ) t2) (e2 : term Γ t1) : term Γ t2 :=
   subst (fun _ var => match var with
   | var_zero => e2
   | var_succ x => var_term x
-  end) e1.
+  end) e1. *)
+
+Program Definition app {Γ t1 t2} (e1 : term (context_cons t1 Γ) t2) (e2 : term Γ t1) : term Γ t2 :=
+  subst (subst1_map e2) e1.
 
 Lemma app_pair_cong {Γ t1 t2 t3} (e1 : term (context_cons t3 Γ) t1) (e2 : term (context_cons t3 Γ) t2) (e3 : term Γ t3) :
   app (pair_term e1 e2) e3 = pair_term (app e1 e3) (app e2 e3).
@@ -250,32 +300,180 @@ Definition pair_cons : ∀ {Γ t1 t2}, term Γ (arrow_type t1 (arrow_type t2 (pr
       (pair_term (var_term (var_succ var_zero))
       (var_term var_zero))).
 
-Lemma app_shift1 {Γ t1 t2} (e1 : term Γ t1) (e2 : term Γ t2) :
-  app (rename (fun _ var => var_succ var) e1) e2 = e1.
+
+Lemma foo {Γ Δ Ω t t'}
+
+(var_to_var : ∀ t, contains Γ t → contains Δ t)
+(var_to_term : ∀ t, contains Δ t → term Ω t)
+(var : contains (context_cons t' Γ) t) :
+      exts var_to_term (ext var_to_var var) =
+      exts (λ t x,
+      var_to_term t (var_to_var t x)) var.
 Proof.
-  induction e1; auto.
-  + unfold app.
-    simpl.
+  dependent destruction var.
+  + reflexivity.
+  + simpl ext.
+    cbn.
+    reflexivity.
+Qed.
+
+Lemma subst_rename
+{Γ}
+{t}
+(e : term Γ t)
+{Δ Ω : context}
+(var_to_var : ∀ t, contains Γ t → contains Δ t)
+(var_to_term : ∀ t, contains Δ t → term Ω t)
+ :
+  subst var_to_term (rename var_to_var e) =
+  subst (fun _ var => var_to_term _ (var_to_var _ var)) e.
+Proof.
+  (* generalize Δ, Ω. *)
+  generalize var_to_var, var_to_term.
+  generalize Δ.
+  generalize Ω.
+  induction e; intros; auto.
+  + simpl.
     f_equal.
-    - eapply IHe1_1.
-    - eapply IHe1_2.
-  + unfold app.
-    simpl.
+    - apply IHe1; auto.
+    - apply IHe2; auto.
+  + simpl.
     f_equal.
-    eapply IHe1.
-  + unfold app.
-    simpl.
+    apply IHe; auto.
+  + simpl.
     f_equal.
-    eapply IHe1.
-  + unfold app.
-    simpl.
+    apply IHe; auto.
+  + cbn.
     f_equal.
-    admit.
-  + unfold app.
-    simpl.
+    erewrite IHe.
+    f_equal.
+Admitted.
+
+Lemma stupid_helper {Γ t1}:
+∀ t (x : contains (context_cons t1 Γ) t),
+exts (λ (t : type) (var : contains Γ t), var_term var) x = var_term x.
+Proof.
+  intros.
+  dependent destruction x; reflexivity.
+Qed.
+
+Lemma subst_id {Γ : context}
+(ρ : ∀ t, contains Γ t → term Γ t):
+(∀ t x, ρ t x = var_term x) →
+∀ t (e : term Γ t), subst ρ e = e.
+Proof.
+  intros.
+  induction e.
+  + reflexivity.
+  + simpl.
+    f_equal.
+    - eapply IHe1.
+      eassumption.
+    - eapply IHe2.
+      eassumption.
+  + simpl.
+    f_equal.
+    erewrite IHe.
+    reflexivity.
+    eassumption.
+  + simpl.
+    f_equal.
+    erewrite IHe.
+    reflexivity.
+    eassumption.
+  + apply H.
+  + simpl.
+    f_equal.
+    apply IHe.
+    intros.
+    dependent destruction x; simpl.
+    - reflexivity.
+    - rewrite H.
+      reflexivity. 
+  + simpl.
+    f_equal.
+    - apply IHe1. assumption.
+    - apply IHe2. assumption.
+Qed.
+
+Definition exts_trivial
+{Γ : context}
+(ρ : ∀ t, contains Γ t → term Γ t) :
+(∀ t (x : contains Γ t), ρ t x = var_term x) →
+∀ t t' (x : contains (context_cons t' Γ) t), exts ρ x = var_term x.
+Proof.
+  intros.
+  dependent destruction x.
+  + reflexivity.
+  + simpl.
+    rewrite H.
+    reflexivity.
+Qed.
+
+Fixpoint stupid {Γ t0 t1} (e1 : term (context_cons t1 Γ) t0) {struct e1} :
+subst
+(λ (t : type) (H : contains (context_cons t1 Γ) t),
+exts (λ (t3 : type) (var : contains Γ t3), var_term var) H) e1 = e1.
+Proof.
+  intros.
+  dependent destruction e1.
+  + reflexivity.
+  + simpl.
+    f_equal.
+    - apply stupid.
+    - apply stupid.
+  + simpl. f_equal. apply stupid.
+  + simpl. f_equal. apply stupid.
+  + simpl.
+    dependent destruction c; reflexivity.
+  + simpl. f_equal.
+    rewrite subst_id.
+    reflexivity.
+    intros.
+    dependent destruction x.
+    - reflexivity.
+    - rewrite exts_trivial.
+      reflexivity.
+      intros.
+      rewrite exts_trivial.
+      reflexivity.
+      intros.
+      reflexivity.
+  + simpl. f_equal; apply stupid.  
+Qed.
+
+Lemma app_shift1 {Γ t1 t2} (e1 : term Γ t1) (e2 : term Γ t2) :
+  (app (rename (λ (t : type) (x : contains Γ t), var_succ x) e1) e2) = e1.
+Proof.
+  dependent induction e1; auto.
+  + cbn.
     f_equal.
     - apply IHe1_1.
     - apply IHe1_2.
+  + cbn.
+    f_equal.
+    apply IHe1.
+  + cbn.
+    f_equal.
+    apply IHe1.
+  + cbn.
+    rewrite subst_rename.
+    apply f_equal.
+    apply subst_id.
+    intros.
+    dependent destruction x; simpl ext.
+    - reflexivity.
+    - reflexivity.
+  + cbn.
+    f_equal.
+    - rewrite subst_rename.
+      apply subst_id.
+      intros.
+      reflexivity.
+    - rewrite subst_rename.
+      apply subst_id.
+      intros.
+      reflexivity.
 Qed.
 
 Definition pair_cons_app {Γ t1 t2} (e1 : term Γ t1) (e2 : term Γ t2) :
@@ -297,15 +495,8 @@ Proof.
     - eapply eqn_abs_beta.
     - erewrite app_pair_cong.
       cbn.
-      replace (subst _ _) with e1.
-      { apply eqn_refl. }
-
-      eapply eqn_refl.
-     unfold rename.
-      simpl.
-     eapply eqn_refl.
-     eapply eqn_app_cong.
-     simpl. apply eqn_refl.
+      rewrite app_shift1.
+      apply eqn_refl.
 Qed.
 
 Lemma pair_intro_cong : ∀ {Γ t1 t2}
@@ -321,10 +512,6 @@ Proof.
   eapply eqn_trans.
   + eapply eqn_sym.
     eapply pair_cons_app.
-    eapply eqn_abs_beta.
-    eapply eqn_prod_cong.
-    - eapply H1.
-    - eapply H2.
   + eapply eqn_prod_cong.
     - eapply H1.
     - eapply H2.
