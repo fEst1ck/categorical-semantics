@@ -241,31 +241,6 @@ Definition pair_cons : ∀ {Γ t1 t2}, term Γ (arrow_type t1 (arrow_type t2 (pr
       (pair_term (var_term (var_succ var_zero))
       (var_term var_zero))).
 
-
-Lemma foo {Γ Δ Ω t t'}
-
-(var_to_var : ∀ t, contains Γ t → contains Δ t)
-(var_to_term : ∀ t, contains Δ t → term Ω t)
-(var : contains (context_cons t' Γ) t) :
-      exts var_to_term (ext var_to_var var) =
-      exts (λ t x,
-      var_to_term t (var_to_var t x)) var.
-Proof.
-  dependent destruction var.
-  + reflexivity.
-  + simpl ext.
-    cbn.
-    reflexivity.
-Qed.
-
-Lemma stupid_helper {Γ t1}:
-∀ t (x : contains (context_cons t1 Γ) t),
-exts (λ (t : type) (var : contains Γ t), var_term var) x = var_term x.
-Proof.
-  intros.
-  dependent destruction x; reflexivity.
-Qed.
-
 Lemma subst_id {Γ : context}
 (ρ : ∀ t, contains Γ t → term Γ t):
 (∀ t x, ρ t x = var_term x) →
@@ -358,38 +333,6 @@ Proof.
   + simpl.
     rewrite H.
     reflexivity.
-Qed.
-
-Fixpoint stupid {Γ t0 t1} (e1 : term (context_cons t1 Γ) t0) {struct e1} :
-subst
-(λ (t : type) (H : contains (context_cons t1 Γ) t),
-exts (λ (t3 : type) (var : contains Γ t3), var_term var) H) e1 = e1.
-Proof.
-  intros.
-  dependent destruction e1.
-  + reflexivity.
-  + simpl.
-    f_equal.
-    - apply stupid.
-    - apply stupid.
-  + simpl. f_equal. apply stupid.
-  + simpl. f_equal. apply stupid.
-  + simpl.
-    dependent destruction c; reflexivity.
-  + simpl. f_equal.
-    rewrite subst_id.
-    reflexivity.
-    intros.
-    dependent destruction x.
-    - reflexivity.
-    - rewrite exts_trivial.
-      reflexivity.
-      intros.
-      rewrite exts_trivial.
-      reflexivity.
-      intros.
-      reflexivity.
-  + simpl. f_equal; apply stupid.  
 Qed.
 
 Fixpoint subst_rename
