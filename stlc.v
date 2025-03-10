@@ -17,12 +17,16 @@ Inductive context : Set :=
 
 Example ctx1 : context := context_cons unit_type empty_context.
 
+(* A variable in context
+   `x : contains Γ t` is a variable in context `Γ` with type `t`. *)
 Inductive contains : context → type → Set :=
   | var_zero : ∀ {Γ t}, contains (context_cons t Γ) t
   | var_succ : ∀ {Γ t t'}, contains Γ t → contains (context_cons t' Γ) t.
 
 Example var1 : contains ctx1 unit_type := var_zero.
 
+(* A term in context
+   `e : term Γ t` is a term in context `Γ` with type `t`. *)
 Inductive term : context → type → Set :=
   | unit_term : ∀ {Γ}, term Γ unit_type
   | pair_term : ∀ {Γ t1 t2}, term Γ t1 → term Γ t2 → term Γ (prod_type t1 t2)
@@ -176,6 +180,8 @@ Proof.
   f_equal.
 Qed.
 
+(* An equation in context
+   `eqn_in_context {Γ t} e1 e2` is a judgement that `e1` and `e2` are equal in context `Γ` with type `t`. *)
 Inductive eqn_in_context : ∀ {Γ t}, term Γ t → term Γ t → Prop :=
   | eqn_refl : ∀ {Γ t} (e : term Γ t), eqn_in_context e e
   | eqn_sym : ∀ {Γ t} (e1 e2 : term Γ t), eqn_in_context e1 e2 → eqn_in_context e2 e1
