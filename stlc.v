@@ -247,25 +247,7 @@ Lemma subst_id {Γ : context}
 ∀ t (e : term Γ t), subst ρ e = e.
 Proof.
   intros.
-  induction e.
-  + reflexivity.
-  + simpl.
-    f_equal.
-    - eapply IHe1.
-      eassumption.
-    - eapply IHe2.
-      eassumption.
-  + simpl.
-    f_equal.
-    erewrite IHe.
-    reflexivity.
-    eassumption.
-  + simpl.
-    f_equal.
-    erewrite IHe.
-    reflexivity.
-    eassumption.
-  + apply H.
+  dependent induction e; cbn; try (f_equal; eauto).
   + simpl.
     f_equal.
     apply IHe.
@@ -274,10 +256,6 @@ Proof.
     - reflexivity.
     - rewrite H.
       reflexivity. 
-  + simpl.
-    f_equal.
-    - apply IHe1. assumption.
-    - apply IHe2. assumption.
 Qed.
 
 Definition exts_eq
