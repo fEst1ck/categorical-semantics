@@ -68,7 +68,6 @@ Next Obligation.
   eapply ρ.
   assumption.
 Defined.
-Print rename.
 (* Proof.
   (* inversion e; subst. *)
   destruct e.
@@ -147,64 +146,6 @@ Defined.
   | abs_term e => abs_term (subst (ext ρ) e)
   | app_term e1 e2 => app_term (subst ρ e1) (subst ρ e2)
   end. *)
-
-  (* Fixpoint subst {Γ Δ : context} (ρ : ∀ {t}, contains Γ t → term Δ t)
-  {t} (e : term Γ t) {struct e} : term Δ t. *)
-
-(* Program Fixpoint subst_one {Γ t t'} (f : term (context_cons t' Γ) t) (a: term Γ t') : term Γ t :=
-  match f with
-  | unit_term => unit_term
-  | pair_term e1 e2 => pair_term (subst_one e1 a) (subst_one e2 a)
-  | fst_term e => fst_term (subst_one e a)
-  | snd_term e => snd_term (subst_one e a)
-  | var_term var_zero => a
-  | var_term (var_succ var) => var_term var
-  | abs_term e => abs_term (subst_one e a)
-  | app_term e1 e2 => app_term (subst_one e1 a) (subst_one e2 a)
-  end.
-Next Obligation.
-  destruct a.
-  + apply unit_term.
-  + apply pair_term.
-    - eapply subst_one.
-      + eassumption.
-      + eassumption. *)
-
-(* Fixpoint subst1
-{Γ t1 t2}
-(var_to_term : ∀ t, contains (context_cons t1 Γ) t → term Γ t)
-
-
-(e1 : term (context_cons t1 Γ) t2) (e2 : term Γ t1) : term Γ t2.
-Proof.
-  dependent destruction e1.
-  + exact unit_term.
-  + apply pair_term.
-    - eapply subst1; eassumption.
-    - eapply subst1; eassumption.
-  + eapply fst_term.
-    eapply subst1; eassumption.
-  + eapply snd_term.
-    eapply subst1; eassumption.
-  + dependent destruction c.
-    - exact e2.
-    - refine (var_term c).
-  + eapply abs_term.
-    admit.
-  + eapply app_term; eapply subst1; eassumption.
-Admitted. *)
-
-  (* match e1 with
-  | unit_term => unit_term
-  | pair_term e1_1 e1_2 => pair_term (subst1 e1_1 e2) (subst1 e1_2 e2)
-  | fst_term e1 => fst_term (subst1 e1 e2)
-  | snd_term e1 => snd_term (subst1 e1 e2)
-  | var_term x => _
-  (* | var_term (var_succ var) => var_term var *)
-  | abs_term e1 => abs_term (subst1 e1 e2)
-  | app_term e1_1 e1_2 => app_term (subst1 e1_1 e2) (subst1 e1_2 e2)
-  end.
-Next Obligation. *)
 
 Definition shift_one {Γ t t'} (e : term Γ t) : term (context_cons t' Γ) t :=
   subst (fun _ var => (var_term (var_succ var))) e.
@@ -317,38 +258,6 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma subst_rename
-{Γ}
-{t}
-(e : term Γ t)
-{Δ Ω : context}
-(var_to_var : ∀ t, contains Γ t → contains Δ t)
-(var_to_term : ∀ t, contains Δ t → term Ω t)
- :
-  subst var_to_term (rename var_to_var e) =
-  subst (fun _ var => var_to_term _ (var_to_var _ var)) e.
-Proof.
-  (* generalize Δ, Ω. *)
-  generalize var_to_var, var_to_term.
-  generalize Δ.
-  generalize Ω.
-  induction e; intros; auto.
-  + simpl.
-    f_equal.
-    - apply IHe1; auto.
-    - apply IHe2; auto.
-  + simpl.
-    f_equal.
-    apply IHe; auto.
-  + simpl.
-    f_equal.
-    apply IHe; auto.
-  + cbn.
-    f_equal.
-    erewrite IHe.
-    f_equal.
-Admitted.
-
 Lemma stupid_helper {Γ t1}:
 ∀ t (x : contains (context_cons t1 Γ) t),
 exts (λ (t : type) (var : contains Γ t), var_term var) x = var_term x.
@@ -396,6 +305,47 @@ Proof.
     - apply IHe2. assumption.
 Qed.
 
+Definition exts_eq
+{Γ Ω: context}
+(ρ1 ρ2 : ∀ t, contains Γ t → term Ω t) :
+(∀ t (x : contains Γ t), ρ1 t x = ρ2 t x) →
+∀ t t' (x : contains (context_cons t' Γ) t), exts ρ1 x = exts ρ2 x.
+Proof.
+  intros.
+  dependent destruction x.
+  + reflexivity.
+  + simpl.
+    f_equal.
+    apply H.
+Qed.
+
+Fixpoint subst_eq {Γ Ω: context}
+(ρ1 ρ2 : ∀ t, contains Γ t → term Ω t)
+(H: ∀ t x, ρ1 t x = ρ2 t x)
+t (e : term Γ t):
+subst ρ1 e = subst ρ2 e.
+Proof.
+  intros.
+  destruct e.
+  + reflexivity.
+  + simpl.
+    f_equal; apply subst_eq; assumption.
+  + simpl.
+    f_equal; apply subst_eq; assumption.
+  + simpl.
+    f_equal; apply subst_eq; assumption.
+  + simpl.
+    f_equal; apply subst_eq; assumption.
+  + simpl.
+    f_equal.
+    apply subst_eq.
+    intros.
+    apply exts_eq.
+    apply H.
+  + simpl.
+    f_equal; apply subst_eq; assumption.
+Qed.
+
 Definition exts_trivial
 {Γ : context}
 (ρ : ∀ t, contains Γ t → term Γ t) :
@@ -440,6 +390,38 @@ Proof.
       intros.
       reflexivity.
   + simpl. f_equal; apply stupid.  
+Qed.
+
+Fixpoint subst_rename
+{Γ}
+{t}
+{Δ Ω : context}
+(var_to_var : ∀ t, contains Γ t → contains Δ t)
+(var_to_term : ∀ t, contains Δ t → term Ω t)
+(e : term Γ t) {struct e}
+ :
+  subst var_to_term (rename var_to_var e) =
+  subst (fun _ var => var_to_term _ (var_to_var _ var)) e.
+Proof.
+  dependent destruction e.
+  + simpl.
+    f_equal; apply subst_rename.
+  + simpl.
+    f_equal; apply subst_rename.
+  + simpl.
+    f_equal; apply subst_rename.
+  + cbn.
+    f_equal.
+    apply subst_rename.
+  + reflexivity.
+  + cbn.
+    f_equal.
+    rewrite subst_rename.
+    eapply subst_eq.
+    intros.
+    dependent destruction x; reflexivity.
+  + simpl.
+    f_equal; apply subst_rename.
 Qed.
 
 Lemma app_shift1 {Γ t1 t2} (e1 : term Γ t1) (e2 : term Γ t2) :
@@ -499,7 +481,7 @@ Proof.
       apply eqn_refl.
 Qed.
 
-Lemma pair_intro_cong : ∀ {Γ t1 t2}
+Theorem pair_intro_cong : ∀ {Γ t1 t2}
   (e1 e1' : term Γ t1)
   (e2 e2' : term Γ t2),
   eqn_in_context e1 e1' →
@@ -511,8 +493,16 @@ Proof.
   intros Γ t1 t2 e1 e1' e2 e2' H1 H2.
   eapply eqn_trans.
   + eapply eqn_sym.
-    eapply pair_cons_app.
-  + eapply eqn_prod_cong.
-    - eapply H1.
-    - eapply H2.
+    apply pair_cons_app.
+  + eapply eqn_trans.
+    eapply eqn_app_cong.
+    2:{
+      apply H2.
+    }
+    eapply eqn_app_cong.
+    2:{
+      apply H1.
+    }
+    apply eqn_refl.
+    apply pair_cons_app.
 Qed.
