@@ -346,59 +346,22 @@ Fixpoint subst_rename
   subst var_to_term (rename var_to_var e) =
   subst (fun _ var => var_to_term _ (var_to_var _ var)) e.
 Proof.
-  dependent destruction e.
-  + simpl.
-    f_equal; apply subst_rename.
-  + simpl.
-    f_equal; apply subst_rename.
-  + simpl.
-    f_equal; apply subst_rename.
-  + cbn.
-    f_equal.
-    apply subst_rename.
-  + reflexivity.
-  + cbn.
-    f_equal.
-    rewrite subst_rename.
-    eapply subst_eq.
-    intros.
-    dependent destruction x; reflexivity.
-  + simpl.
-    f_equal; apply subst_rename.
+  dependent destruction e; cbn; try (f_equal; eauto).
+  f_equal.
+  rewrite subst_rename.
+  eapply subst_eq.
+  intros.
+  dependent destruction x; reflexivity.
 Qed.
 
 Lemma app_shift1 {Γ t1 t2} (e1 : term Γ t1) (e2 : term Γ t2) :
   (app (rename (λ (t : type) (x : contains Γ t), var_succ x) e1) e2) = e1.
 Proof.
-  dependent induction e1; auto.
-  + cbn.
-    f_equal.
-    - apply IHe1_1.
-    - apply IHe1_2.
-  + cbn.
-    f_equal.
-    apply IHe1.
-  + cbn.
-    f_equal.
-    apply IHe1.
-  + cbn.
-    rewrite subst_rename.
-    apply f_equal.
-    apply subst_id.
-    intros.
-    dependent destruction x; simpl ext.
-    - reflexivity.
-    - reflexivity.
-  + cbn.
-    f_equal.
-    - rewrite subst_rename.
-      apply subst_id.
-      intros.
-      reflexivity.
-    - rewrite subst_rename.
-      apply subst_id.
-      intros.
-      reflexivity.
+  dependent induction e1; cbn; try (f_equal; eauto).
+  rewrite subst_rename.
+  apply subst_id.
+  intros.
+  dependent destruction x; simpl ext; reflexivity.
 Qed.
 
 Definition pair_cons_app {Γ t1 t2} (e1 : term Γ t1) (e2 : term Γ t2) :
