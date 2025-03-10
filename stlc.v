@@ -279,24 +279,11 @@ t (e : term Γ t):
 subst ρ1 e = subst ρ2 e.
 Proof.
   intros.
-  destruct e.
-  + reflexivity.
-  + simpl.
-    f_equal; apply subst_eq; assumption.
-  + simpl.
-    f_equal; apply subst_eq; assumption.
-  + simpl.
-    f_equal; apply subst_eq; assumption.
-  + simpl.
-    f_equal; apply subst_eq; assumption.
-  + simpl.
-    f_equal.
-    apply subst_eq.
-    intros.
-    apply exts_eq.
-    apply H.
-  + simpl.
-    f_equal; apply subst_eq; assumption.
+  dependent destruction e; cbn; try (f_equal; eauto).
+  apply subst_eq.
+  intros.
+  apply exts_eq.
+  apply H.
 Qed.
 
 Definition exts_trivial
