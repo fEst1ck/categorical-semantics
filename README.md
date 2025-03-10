@@ -5,7 +5,7 @@ We formalize in Coq:
 - just enough category theory
 - sound models of STLC in Cartesian closed categories (WIP)
 
-This was my course project of graduate level course CS 747, Formal Reasoning with Proof Assistants, given at University of Waterloo by Yizhou Zhang, 2025 Winter.
+This was my course project of graduate level course [CS 747, Formal Reasoning with Proof Assistants](https://cs.uwaterloo.ca/~yizhou/courses/cs747-2025wi/), given at University of Waterloo by Yizhou Zhang, 2025 Winter.
 
 # Note on Implementation
 
