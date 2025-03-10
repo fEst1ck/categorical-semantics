@@ -332,7 +332,7 @@ Proof.
   rewrite subst_rename.
   apply subst_id.
   intros.
-  dependent destruction x; simpl ext; reflexivity.
+  dependent destruction x; reflexivity.
 Qed.
 
 Definition pair_cons_app {Γ t1 t2} (e1 : term Γ t1) (e2 : term Γ t2) :
