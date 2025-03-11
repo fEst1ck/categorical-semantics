@@ -130,3 +130,8 @@ Next Obligation.
   destruct x.
   reflexivity.
 Defined.
+
+Class CartesianClosed C `{Terminal C} `{HasProduct C} `{HasExponential C} := {
+}.
+
+Instance set_cartesian_closed : CartesianClosed Set := {}.
