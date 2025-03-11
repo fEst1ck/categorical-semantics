@@ -52,14 +52,14 @@ Next Obligation.
   destruct x.
 Defined.
 
-Class Terminal C `{Category C} := {
-  terminal : C;
-  terminal_unique : ∀ {X : C} {g1 g2 : Hom X terminal}, g1 = g2;
+Class HasTerminal C `{Category C} := {
+  terminal_obj : C;
+  terminal_uniq : ∀ {X : C} {g1 g2 : Hom X terminal_obj}, g1 = g2;
 }.
 
-Program Instance set_terminal : Terminal Set := {
-  terminal := unit;
-  terminal_unique := _;
+Program Instance set_HasTerminal : HasTerminal Set := {
+  terminal_obj := unit;
+  terminal_uniq := _;
 }.
 
 Next Obligation.
@@ -131,7 +131,7 @@ Next Obligation.
   reflexivity.
 Defined.
 
-Class CartesianClosed C `{Terminal C} `{HasProduct C} `{HasExponential C} := {
+Class CartesianClosed C `{HasTerminal C} `{HasProduct C} `{HasExponential C} := {
 }.
 
 Instance set_cartesian_closed : CartesianClosed Set := {}.
