@@ -40,6 +40,7 @@ Program Instance set_category : Category Set := {
 
 Class Initial C `{Category C} := {
   initial : C;
+  initial_map : ∀ {X : C}, Hom initial X;
   initial_unique : ∀ {X : C} {g1 g2 : Hom initial X}, g1 = g2;
 }.
 
@@ -47,6 +48,11 @@ Program Instance set_initial : Initial Set := {
   initial := Empty_set;
   initial_unique := _;
 }.
+
+Next Obligation.
+  destruct H.
+Defined.
+
 Next Obligation.
   extensionality x.
   destruct x.
@@ -54,13 +60,19 @@ Defined.
 
 Class HasTerminal C `{Category C} := {
   terminal_obj : C;
+  terminal_map : ∀ {X}, Hom X terminal_obj;
   terminal_uniq : ∀ {X : C} {g1 g2 : Hom X terminal_obj}, g1 = g2;
 }.
 
 Program Instance set_HasTerminal : HasTerminal Set := {
   terminal_obj := unit;
+  terminal_map := _;
   terminal_uniq := _;
 }.
+
+Next Obligation.
+  refine tt.
+Defined.
 
 Next Obligation.
   extensionality x.

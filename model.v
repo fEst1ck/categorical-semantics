@@ -18,4 +18,7 @@ Fixpoint ctx_denot {C} `{CartesianClosed C} (Γ : context) : C :=
 
 Fixpoint tm_denot {C} `{CartesianClosed C} {Γ t} (e : term Γ t)
 : Hom (ctx_denot Γ) (ty_denot t).
+Proof.
+    destruct e.
+    + 
 Admitted.
