@@ -143,7 +143,7 @@ Next Obligation.
   reflexivity.
 Defined.
 
-Class CartesianClosed C `{HasTerminal C} `{HasProduct C} `{HasExponential C} := {
+Class CartesianClosed C `{Hc : Category C} `{@HasTerminal C Hc} `{Hp : @HasProduct C Hc} `{@HasExponential C Hc Hp} := {
 }.
 
 Instance set_cartesian_closed : CartesianClosed Set := {}.
