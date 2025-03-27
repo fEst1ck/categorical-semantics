@@ -59,7 +59,7 @@ Proof.
     reflexivity.
 Qed.
 
-Fixpoint foo 
+Fixpoint ext_subst_denot 
 {C} `{CartesianClosed C}
 {Γ Δ}
 {t'}
@@ -105,7 +105,8 @@ Proof.
     apply denot_comp.
   + simpl.
     rewrite IHe.
-    rewrite foo.
+    rewrite ext_subst_denot
+  .
     admit.
   + simpl.
     rewrite IHe1.
