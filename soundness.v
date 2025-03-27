@@ -4,7 +4,7 @@ Require Import category.
 Require Import stlc.
 Require Import model.
 
-Fixpoint subst_cat {C} `{CartesianClosed C}
+Fixpoint subst_denot {C} `{CartesianClosed C}
 {Γ Δ : context} (ρ : ∀ t, contains Γ t → term Δ t) {struct Γ}:
 Hom (ctx_denot Δ) (ctx_denot Γ).
 Proof.
@@ -17,7 +17,7 @@ Proof.
       apply ρ.
       apply var_zero.
     }
-    - apply subst_cat.
+    - apply subst_denot.
       intros.
       apply ρ.
       apply var_succ.
@@ -45,7 +45,7 @@ Lemma denot_comp :
 {ρ : ∀ t : type, contains Γ t → term Δ t}
 {t}
 (c : contains Γ t),
-tm_denot (ρ t c) = compose (var_denot c) (subst_cat ρ).
+tm_denot (ρ t c) = compose (var_denot c) (subst_denot ρ).
 Proof.
   intros.
   induction c.
@@ -64,7 +64,7 @@ Fixpoint foo
 {Γ Δ}
 {t'}
 (ρ : ∀ t : type, contains Γ t → term Δ t) {struct Γ}:
-subst_cat (exts ρ t') = ext_ctx_denot (subst_cat ρ).
+subst_denot (exts ρ t') = ext_ctx_denot (subst_denot ρ).
 Proof.
   destruct Γ.
   + 
@@ -74,7 +74,7 @@ Proof.
     rewrite compose_id_l.
     f_equal.
     apply terminal_uniq.
-  + unfold subst_cat.
+  + unfold subst_denot.
 Admitted.
 
 Lemma subst_denot:
@@ -83,7 +83,7 @@ Lemma subst_denot:
 {t} {e: term Γ t}
 {Δ : context}
 {ρ : ∀ t, contains Γ t → term Δ t},
-tm_denot (subst ρ e) = compose (tm_denot e) (subst_cat ρ).
+tm_denot (subst ρ e) = compose (tm_denot e) (subst_denot ρ).
 Proof.
   intros C HC HT HP HE HCC Γ t e.
   dependent induction e; intros.
