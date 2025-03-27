@@ -66,18 +66,9 @@ Fixpoint ext_subst_denot
 (ρ : ∀ t : type, contains Γ t → term Δ t) {struct Γ}:
 subst_denot (exts ρ t') = ext_ctx_denot (subst_denot ρ).
 Proof.
-  destruct Γ.
-  + 
-   simpl.
-    unfold ext_ctx_denot.
-    unfold prod_map.
-    rewrite compose_id_l.
-    f_equal.
-    apply terminal_uniq.
-  + unfold subst_denot.
 Admitted.
 
-Lemma subst_denot:
+Lemma subst_denot_decomp:
 ∀ {C} `{CartesianClosed C}
 {Γ}
 {t} {e: term Γ t}
@@ -135,11 +126,11 @@ Proof.
     reflexivity.
   + unfold app.
     simpl.
-    rewrite subst_denot.
+    rewrite subst_denot_decomp.
    admit.
   + simpl.
     unfold shift_one.
-    rewrite subst_denot.
+    rewrite subst_denot_decomp.
    admit.
   + apply f_prod_comm1.
   + apply f_prod_comm2.
