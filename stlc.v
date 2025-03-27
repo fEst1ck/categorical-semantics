@@ -151,6 +151,11 @@ Defined.
   | app_term e1 e2 => app_term (subst ρ e1) (subst ρ e2)
   end. *)
 
+(* Lemma subst_closed:
+∀ {Δ : context} (ρ : ∀ t, contains empty_context t → term Δ t)
+{t} (e : term empty_context t),
+subst ρ e = e. *)
+
 Definition shift_one {Γ t t'} (e : term Γ t) : term (context_cons t' Γ) t :=
   subst (fun _ var => (var_term (var_succ var))) e.
 

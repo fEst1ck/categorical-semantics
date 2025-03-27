@@ -64,6 +64,13 @@ Class HasTerminal C `{Category C} := {
   terminal_uniq : ∀ {X : C} {g1 g2 : Hom X terminal_obj}, g1 = g2;
 }.
 
+Lemma terminal_obj_map : ∀ {C} `{HasTerminal C},
+@terminal_map _ _ _ terminal_obj = id terminal_obj.
+Proof.
+  intros.
+  apply terminal_uniq.
+Qed.
+
 Program Instance set_HasTerminal : HasTerminal Set := {
   terminal_obj := unit;
   terminal_map := _;
@@ -100,6 +107,26 @@ Class HasProduct C `{Category C} := {
 Definition prod_map {C} `{HasProduct C} {X Y Z W : C}
 (f : Hom X Y) (g : Hom Z W) : Hom (product X Z) (product Y W) :=
   f_prod (compose f fst) (compose g snd).
+
+Lemma prod_map_comp_distr :
+∀ {C} `{HasProduct C} {W X Y Z: C}
+{f : Hom X Y} {g : Hom X Z} {h : Hom W X},
+f_prod (compose f h) (compose g h) = compose (f_prod f g) h.
+Proof.
+  intros.
+  erewrite f_prod_uniq with (f := compose f h) (g := compose g h).
+  3:{
+    rewrite <- compose_assoc.
+    rewrite f_prod_comm2.
+    reflexivity.
+  }
+  2:{
+    rewrite <- compose_assoc.
+    rewrite f_prod_comm1.
+    reflexivity.
+  }
+  reflexivity.
+Qed.
 
 Open Scope type_scope.
 
