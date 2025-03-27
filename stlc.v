@@ -100,7 +100,7 @@ Defined.
 Defined. *)
 
 Program Definition exts {Γ Δ : context} (ρ : ∀ {t}, contains Γ t → term Δ t) :
-  ∀ {t t'}, contains (context_cons t' Γ) t → term (context_cons t' Δ) t :=
+  ∀ t' t, contains (context_cons t' Γ) t → term (context_cons t' Δ) t :=
   fun t t' var =>
   match var with
   | var_zero => var_term var_zero
@@ -273,7 +273,7 @@ Definition exts_eq
 {Γ Ω: context}
 (ρ1 ρ2 : ∀ t, contains Γ t → term Ω t) :
 (∀ t (x : contains Γ t), ρ1 t x = ρ2 t x) →
-∀ t t' (x : contains (context_cons t' Γ) t), exts ρ1 x = exts ρ2 x.
+∀ t t' (x : contains (context_cons t' Γ) t), exts ρ1 _ _ x = exts ρ2 _ _ x.
 Proof.
   intros.
   dependent destruction x.
@@ -301,7 +301,7 @@ Definition exts_trivial
 {Γ : context}
 (ρ : ∀ t, contains Γ t → term Γ t) :
 (∀ t (x : contains Γ t), ρ t x = var_term x) →
-∀ t t' (x : contains (context_cons t' Γ) t), exts ρ x = var_term x.
+∀ t t' (x : contains (context_cons t' Γ) t), exts ρ _ _ x = var_term x.
 Proof.
   intros.
   dependent destruction x.

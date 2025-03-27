@@ -24,6 +24,21 @@ Proof.
       assumption.
 Defined.
 
+Definition ext_ctx_denot
+{C} `{CartesianClosed C}
+{t'}
+{Γ Δ : context}
+:
+Hom (ctx_denot Δ) (ctx_denot Γ) →
+Hom (ctx_denot (context_cons t' Δ)) (ctx_denot (context_cons t' Γ)).
+Proof.
+  intro f.
+  simpl.
+  eapply prod_map.
+  - refine f.
+  - apply id.
+Defined.
+
 Lemma denot_comp :
 ∀ {C} `{CartesianClosed C}
 {Γ Δ}
@@ -44,15 +59,34 @@ Proof.
     reflexivity.
 Qed.
 
+Fixpoint foo 
+{C} `{CartesianClosed C}
+{Γ Δ}
+{t'}
+(ρ : ∀ t : type, contains Γ t → term Δ t) {struct Γ}:
+subst_cat (exts ρ t') = ext_ctx_denot (subst_cat ρ).
+Proof.
+  destruct Γ.
+  + 
+   simpl.
+    unfold ext_ctx_denot.
+    unfold prod_map.
+    rewrite compose_id_l.
+    f_equal.
+    apply terminal_uniq.
+  + unfold subst_cat.
+Admitted.
+
 Lemma subst_denot:
 ∀ {C} `{CartesianClosed C}
-{Γ Δ : context}
-{ρ : ∀ t, contains Γ t → term Δ t}
-{t} {e: term Γ t},
+{Γ}
+{t} {e: term Γ t}
+{Δ : context}
+{ρ : ∀ t, contains Γ t → term Δ t},
 tm_denot (subst ρ e) = compose (tm_denot e) (subst_cat ρ).
 Proof.
-  intros C HC HT HP HE HCC Γ Δ ρ t e.
-  induction e.
+  intros C HC HT HP HE HCC Γ t e.
+  dependent induction e; intros.
   + simpl.
     apply terminal_uniq.
   + simpl.
@@ -70,9 +104,9 @@ Proof.
   + simpl.
     apply denot_comp.
   + simpl.
-    (* Set Printing Implicit. *)
-    rewrite IHe with (ρ := (λ (t : type) (H : contains (context_cons t1 Γ) t), exts ρ H)).
-   admit.
+    rewrite IHe.
+    rewrite foo.
+    admit.
   + simpl.
     rewrite IHe1.
     rewrite IHe2.
@@ -100,8 +134,12 @@ Proof.
     reflexivity.
   + unfold app.
     simpl.
+    rewrite subst_denot.
    admit.
-  + admit.
+  + simpl.
+    unfold shift_one.
+    rewrite subst_denot.
+   admit.
   + apply f_prod_comm1.
   + apply f_prod_comm2.
   + simpl.
