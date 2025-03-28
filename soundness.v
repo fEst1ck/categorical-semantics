@@ -30,14 +30,8 @@ Definition ext_ctx_denot
 {Γ Δ : context}
 :
 Hom (ctx_denot Δ) (ctx_denot Γ) →
-Hom (ctx_denot (context_cons t' Δ)) (ctx_denot (context_cons t' Γ)).
-Proof.
-  intro f.
-  simpl.
-  eapply prod_map.
-  - refine f.
-  - apply id.
-Defined.
+Hom (ctx_denot (context_cons t' Δ)) (ctx_denot (context_cons t' Γ))
+:= fun f => prod_map f (id _).
 
 Lemma denot_comp :
 ∀ {C} `{CartesianClosed C}
@@ -96,16 +90,16 @@ Proof.
     apply denot_comp.
   + simpl.
     rewrite IHe.
-    rewrite ext_subst_denot
-  .
-    admit.
+    rewrite ext_subst_denot.
+    rewrite <- curry_subst.
+    reflexivity.
   + simpl.
     rewrite IHe1.
     rewrite IHe2.
     rewrite compose_assoc.
     f_equal.
     apply prod_map_comp_distr.
-Admitted.
+Qed.
 
 Theorem soundness : ∀ {C} `{CartesianClosed C} {Γ t} {e1 e2 : term Γ t},
     eqn_in_context e1 e2 → tm_denot e1 = tm_denot e2.

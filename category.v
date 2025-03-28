@@ -128,6 +128,41 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma comp_prod_map_distr :
+∀ {C} `{HasProduct C} {X X' Y Y' Z Z': C}
+{f : Hom X Y} {f' : Hom X' Y'} {g : Hom Y Z} {g' : Hom Y' Z'},
+prod_map (compose g f) (compose g' f') = compose (prod_map g g') (prod_map f f').
+Proof.
+  intros.
+  symmetry.
+  eapply f_prod_uniq.
+  + rewrite <- compose_assoc.
+    unfold prod_map.
+    rewrite f_prod_comm1.
+    rewrite compose_assoc.
+    rewrite f_prod_comm1.
+    rewrite compose_assoc.
+    reflexivity.
+  + rewrite <- compose_assoc.
+    unfold prod_map.
+    rewrite f_prod_comm2.
+    rewrite compose_assoc.
+    rewrite f_prod_comm2.
+    rewrite compose_assoc.
+    reflexivity.
+Qed.
+
+Lemma comp_prod_map_distr1 :
+∀ {C} `{HasProduct C} {X Y Z W : C}
+{f : Hom X Y} {g : Hom Y Z},
+prod_map (compose g f) (id W) = compose (prod_map g (id W)) (prod_map f (id W)).
+Proof.
+  intros.
+  rewrite <- comp_prod_map_distr.
+  rewrite compose_id_l.
+  reflexivity.
+Qed.
+
 Open Scope type_scope.
 
 Program Instance set_has_product : HasProduct Set := {
@@ -174,3 +209,19 @@ Class CartesianClosed C `{Hc : Category C} `{@HasTerminal C Hc} `{Hp : @HasProdu
 }.
 
 Instance set_cartesian_closed : CartesianClosed Set := {}.
+
+Lemma curry_subst :
+∀ {C} `{CartesianClosed C}
+{W X Y Z : C}
+{f : Hom (product X Y) Z}
+{g : Hom W X},
+curry (compose f (prod_map g (id Y))) = compose (curry f) g.
+Proof.
+  intros.
+  symmetry.
+  apply curry_uniq.
+  rewrite comp_prod_map_distr1.
+  rewrite <- compose_assoc.
+  rewrite exponential_comm.
+  reflexivity.
+Qed.
