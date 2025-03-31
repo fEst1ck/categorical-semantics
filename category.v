@@ -225,3 +225,33 @@ Proof.
   rewrite exponential_comm.
   reflexivity.
 Qed.
+
+Lemma curry_prop :
+∀ {C} `{CartesianClosed C}
+{X Y Z : C}
+{f : Hom (product X Y) Z}
+{g : Hom X Y},
+compose eval (f_prod (curry f) g) =
+compose f (f_prod (id _) g).
+Proof.
+  intros.
+  replace (f_prod (curry f) g) with (compose (prod_map (curry f) (id _)) (f_prod (id _) g)).
+  rewrite <- compose_assoc.
+  f_equal.
+  apply exponential_comm.
+  apply f_prod_uniq.
+  + rewrite <- compose_assoc.
+    unfold prod_map.
+    rewrite compose_id_l.
+    rewrite f_prod_comm1.
+    rewrite compose_assoc.
+    rewrite f_prod_comm1.
+    rewrite compose_id_r.
+    reflexivity.
+  + rewrite <- compose_assoc.
+    unfold prod_map.
+    rewrite compose_id_l.
+    rewrite f_prod_comm2.
+    rewrite f_prod_comm2.
+    reflexivity.
+Qed.
