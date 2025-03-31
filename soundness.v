@@ -25,6 +25,37 @@ Proof.
       assumption.
 Defined.
 
+Lemma rename_denot_comp :
+∀ {C} `{CartesianClosed C}
+{Γ Δ Ω: context}
+(f : ∀ t, contains Γ t → contains Δ t)
+(g : ∀ t, contains Δ t → contains Ω t)
+{t} (x : contains Γ t),
+rename_denot (fun t x => g t (f t x)) = compose (rename_denot f) (rename_denot g).
+Proof.
+  intros.
+  induction Γ.
+  + simpl.
+    apply terminal_uniq.
+  + simpl.
+    symmetry.
+    apply f_prod_uniq.
+Admitted.
+
+Lemma rename_denot_id :
+∀ {C} `{CartesianClosed C}
+{Γ t'},
+rename_denot (fun t (x : contains Γ t) => @var_succ _ t t' x) = fst.
+Proof.
+  intros.
+  dependent induction Γ.
+  + simpl.
+    apply terminal_uniq.
+  + simpl.
+    symmetry.
+    apply f_prod_uniq.
+Admitted.
+
 Fixpoint subst_denot {C} `{CartesianClosed C}
 {Γ Δ : context} (ρ : ∀ t, contains Γ t → term Δ t) {struct Γ}:
 Hom (ctx_denot Δ) (ctx_denot Γ).
@@ -44,6 +75,69 @@ Proof.
       apply var_succ.
       assumption.
 Defined.
+
+Definition var_to_term_unshift
+{Δ Ω : context}
+{t'}
+(var_to_term : ∀ t, contains (context_cons t' Δ) t → term Ω t)
+:
+∀ t, contains Δ t → term Ω t :=
+fun t x => var_to_term t (var_succ x).
+
+(* Definition var_to_term_unshift
+{Δ Ω : context}
+{t'}
+(var_to_term : ∀ t, contains (context_cons t' Δ) t → term Ω t)
+:
+∀ t, contains Δ t → term Ω t :=
+fun t x => var_to_term t (var_succ x). *)
+
+Definition var_to_term_unshift_id:
+∀
+{Δ Ω : context}
+{t'}
+{t} (x : contains Δ t)
+(var_to_term : ∀ t, contains (context_cons t' Δ) t → term Ω t),
+(var_to_term t (var_succ x)) = ((var_to_term_unshift var_to_term) t x).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma tm_denot_var_succ:
+∀
+{C} `{CartesianClosed C}
+{Δ Ω : context}
+{t'}
+(var_to_term : ∀ t, contains (context_cons t' Δ) t → term Ω t)
+{t}
+(x : contains Δ t)
+,
+tm_denot (var_to_term t (var_succ x)) =
+tm_denot ((var_to_term_unshift var_to_term) t x).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma subst_rename_helper
+{C} `{CartesianClosed C}
+(* {Γ} *)
+{Δ Ω : context}
+(* (var_to_var : ∀ t, contains Γ t → contains Δ t) *)
+(var_to_term : ∀ t, contains Δ t → term Ω t)
+{t}
+(x : contains Δ t)
+:
+compose (var_denot x) (subst_denot var_to_term) =
+tm_denot (var_to_term t x).
+Proof.
+  dependent induction x.
+  + simpl.
+    apply f_prod_comm2.
+  + simpl.
+    rewrite compose_assoc.
+    rewrite f_prod_comm1.
+    apply IHx.
+Qed.
 
 Lemma subst_rename
 {C} `{CartesianClosed C}
@@ -68,7 +162,8 @@ Proof.
       reflexivity.
     - rewrite <- compose_assoc.
       rewrite f_prod_comm2.
-Admitted.
+      apply subst_rename_helper.
+Qed.
 
 Lemma var_succ_denot :
 ∀ {C} `{CartesianClosed C}
@@ -85,9 +180,9 @@ Proof.
     2:{ reflexivity. }
     rewrite subst_rename with (var_to_term := fun _ x => var_term (var_succ x)).
     f_equal.
-    - generalize Γ.
-      induction Γ0.
-      * simpl. apply terminal_uniq.
+    - rewrite rename_denot_id.
+      reflexivity.
+    - admit.
 Admitted.
 
 Lemma subst1_map_denot :
