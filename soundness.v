@@ -214,10 +214,16 @@ Proof.
   + simpl.
     unfold shift_one.
     rewrite subst_denot_decomp.
-   admit.
+    rewrite var_succ_denot.
+    symmetry.
+    apply curry_uniq.
+    f_equal.
+    unfold prod_map.
+    rewrite compose_id_l.
+    reflexivity.
   + apply f_prod_comm1.
   + apply f_prod_comm2.
   + simpl.
     symmetry.
     apply f_prod_uniq; reflexivity.
-Admitted.
+Qed.
