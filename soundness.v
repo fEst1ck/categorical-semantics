@@ -25,27 +25,51 @@ Proof.
       assumption.
 Defined.
 
+Lemma compose_var_denot_rename_denot :
+∀ {C} `{CartesianClosed C}
+{Δ Ω}
+(g : ∀ t, contains Δ t → contains Ω t)
+{t x},
+compose (var_denot x) (rename_denot g) = var_denot (g t x).
+Proof.
+  intros.
+  dependent induction x.
+  + simpl.
+    apply f_prod_comm2.
+  + simpl.
+    rewrite compose_assoc.
+    rewrite f_prod_comm1.
+    rewrite IHx.
+    reflexivity.
+Qed.
+
 Lemma rename_denot_comp :
 ∀ {C} `{CartesianClosed C}
 {Γ Δ Ω: context}
 (f : ∀ t, contains Γ t → contains Δ t)
-(g : ∀ t, contains Δ t → contains Ω t)
-{t} (x : contains Γ t),
+(g : ∀ t, contains Δ t → contains Ω t),
 rename_denot (fun t x => g t (f t x)) = compose (rename_denot f) (rename_denot g).
 Proof.
   intros.
-  induction Γ.
+  dependent induction Γ.
   + simpl.
     apply terminal_uniq.
   + simpl.
+    rewrite IHΓ.
     symmetry.
     apply f_prod_uniq.
-Admitted.
+    - rewrite <- compose_assoc.
+      rewrite f_prod_comm1.
+      reflexivity.
+    - rewrite <- compose_assoc.
+      rewrite f_prod_comm2.
+      apply compose_var_denot_rename_denot.
+Qed.
 
 Lemma rename_denot_id :
 ∀ {C} `{CartesianClosed C}
 {Γ t'},
-rename_denot (fun t (x : contains Γ t) => @var_succ _ t t' x) = fst.
+(rename_denot (fun t (x : contains Γ t) => @var_succ _ t t' x) = fst).
 Proof.
   intros.
   dependent induction Γ.
@@ -54,6 +78,11 @@ Proof.
   + simpl.
     symmetry.
     apply f_prod_uniq.
+    - rewrite rename_denot_comp with (f := fun _ x => @var_succ _ _ _ x) (g := fun _ x => @var_succ _ _ _ x).
+      rewrite IHΓ.
+      f_equal.
+      admit.
+    - reflexivity.
 Admitted.
 
 Fixpoint subst_denot {C} `{CartesianClosed C}
