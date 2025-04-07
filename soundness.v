@@ -4,6 +4,101 @@ Require Import category.
 Require Import stlc.
 Require Import model.
 
+Inductive index_of_list {T} : list T → Type :=
+| zero : ∀ x l, index_of_list (x :: l)
+| succ : ∀ x l, index_of_list l → index_of_list (x :: l)
+.
+
+Fixpoint rename_concrete
+{Γ Δ : context} (ρ : ∀ t, contains Γ t → contains Δ t) {struct Γ}:
+list { t : type & contains Δ t }.
+Proof.
+  destruct Γ.
+  + exact nil.
+  + apply cons.
+    - exists t.
+      apply ρ.
+      apply var_zero.
+    - eapply rename_concrete.
+      intros.
+      apply ρ.
+      apply var_succ.
+      apply H.
+Defined.
+
+Lemma rename_concrete_suc:
+∀
+{Γ Δ : context} {t'} (ρ : ∀ t, contains (context_cons t' Γ) t → contains Δ t),
+{ s & (cons s (rename_concrete (fun t x => ρ t (@var_succ _ _ t' x)))) = (rename_concrete ρ) }.
+Proof.
+  intros.
+  destruct Γ.
+  + eexists.
+    reflexivity.
+  + simpl.
+    eexists.
+    f_equal.
+Qed.
+
+Fixpoint var_to_nat
+{Γ t} (x : contains Γ t) : nat.
+Proof.
+  destruct x eqn:Hx.
+  + exact 0.
+  + exact (S (var_to_nat _ _ c)).
+Defined.
+
+Fixpoint apply_rename_concrete
+{Γ Δ : context}
+(l : list { t : type & contains Δ t })
+{t}
+(x : contains Γ t) : option { t : type & contains Δ t }.
+Proof.
+  destruct x eqn:Hx.
+  + destruct l eqn:Hl.
+    - exact None.
+    - refine (Some s).
+  + destruct l eqn:Hl.
+    - exact None.
+    - eapply apply_rename_concrete.
+      2:{
+        apply c.
+      }
+      exact l0.
+Defined.
+
+Definition var_to_pair
+{Γ t} (x : contains Γ t) :
+{ t : type & contains Γ t } :=
+existT _ t x.
+
+Require Import Coq.Lists.List.
+
+Lemma apply_rename_concrete_correct:
+∀
+{Γ Δ : context}
+(ρ : ∀ t, contains Γ t → contains Δ t)
+{t}
+(x : contains Γ t),
+List.nth_error (rename_concrete ρ) (var_to_nat x) = Some (var_to_pair (ρ t x)).
+Proof.
+  intros.
+  dependent induction x.
+  + simpl.
+    reflexivity.
+  + destruct ((rename_concrete ρ)) eqn:Hρ.
+    - simpl.
+      inversion Hρ.
+    - simpl.
+      erewrite <- IHx with (ρ := (fun t (x : contains Γ t) => (ρ t (var_succ x)))).
+      f_equal.
+      pose proof (rename_concrete_suc ρ) as Hsuc.
+      destruct Hsuc as [s' Hsuc].
+      rewrite Hρ in Hsuc.
+      inversion Hsuc; subst.
+      reflexivity.
+Qed.
+
 Fixpoint rename_denot {C} `{CartesianClosed C}
 {Γ Δ : context} (ρ : ∀ t, contains Γ t → contains Δ t) {struct Γ}:
 Hom (ctx_denot Δ) (ctx_denot Γ).
@@ -66,10 +161,38 @@ Proof.
       apply compose_var_denot_rename_denot.
 Qed.
 
-Lemma rename_denot_id :
-∀ {C} `{CartesianClosed C}
-{Γ t'},
-(rename_denot (fun t (x : contains Γ t) => @var_succ _ t t' x) = fst).
+Fixpoint ctx_cons_n Γ t n : context :=
+  match n with
+  | 0 => Γ
+  | S n' => context_cons t (ctx_cons_n Γ t n')
+  end.
+
+Fixpoint var_succ_n {Γ t' t} n
+(x : contains Γ t') :
+contains (ctx_cons_n Γ t n) t' :=
+match n with
+| 0 => x
+| S n' => var_succ (var_succ_n n' x)
+end.
+
+Fixpoint fst_n {C} `{CartesianClosed C} Γ t n :
+Hom (ctx_denot (ctx_cons_n Γ t n)) (ctx_denot Γ).
+Proof.
+  destruct n.
+  + simpl.
+    apply id.
+  + simpl.
+    eapply compose.
+    2:{
+      apply fst.
+    }
+    apply fst_n.
+Defined.
+
+Fixpoint rename_denot_id
+{C} `{CartesianClosed C}
+{Γ t'} {struct Γ}:
+(rename_denot (fun t (x : contains Γ t) => @var_succ _ _ t' x) = fst).
 Proof.
   intros.
   dependent induction Γ.
@@ -81,9 +204,32 @@ Proof.
     - rewrite rename_denot_comp with (f := fun _ x => @var_succ _ _ _ x) (g := fun _ x => @var_succ _ _ _ x).
       rewrite IHΓ.
       f_equal.
-      admit.
+      rewrite IHΓ.
+      rewrite rename_denot_id.
+      reflexivity.
     - reflexivity.
-Admitted.
+Qed.
+
+Fixpoint rename_denot_id
+{C} `{CartesianClosed C}
+{Γ t'} {struct Γ}:
+(rename_denot (fun t (x : contains Γ t) => @var_succ _ _ t' x) = fst).
+Proof.
+  intros.
+  dependent induction Γ.
+  + simpl.
+    apply terminal_uniq.
+  + simpl.
+    symmetry.
+    apply f_prod_uniq.
+    - rewrite rename_denot_comp with (f := fun _ x => @var_succ _ _ _ x) (g := fun _ x => @var_succ _ _ _ x).
+      rewrite IHΓ.
+      f_equal.
+      rewrite IHΓ.
+      rewrite rename_denot_id.
+      reflexivity.
+    - reflexivity.
+Qed.
 
 Fixpoint subst_denot {C} `{CartesianClosed C}
 {Γ Δ : context} (ρ : ∀ t, contains Γ t → term Δ t) {struct Γ}:

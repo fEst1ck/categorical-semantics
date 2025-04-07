@@ -104,6 +104,19 @@ Class HasProduct C `{Category C} := {
     compose fst h = f → compose snd h = g → h = f_prod f g;
 }.
 
+Lemma f_prod_uniq1 {C} `{HasProduct C}
+  {X Y Z}
+  (f g : Hom Z (product X Y)) :
+  compose fst f = compose fst g ->
+  compose snd f = compose snd g ->
+  f = g.
+Proof.
+  intros.
+  apply (eq_trans (f_prod_uniq (compose fst f) (compose snd f) f eq_refl eq_refl)).
+  symmetry.
+  apply f_prod_uniq; auto.
+Qed.
+
 Definition prod_map {C} `{HasProduct C} {X Y Z W : C}
 (f : Hom X Y) (g : Hom Z W) : Hom (product X Z) (product Y W) :=
   f_prod (compose f fst) (compose g snd).
