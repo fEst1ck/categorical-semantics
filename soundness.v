@@ -50,7 +50,7 @@ Proof.
   + solve_category_eq.
   + simpl.
     rewrite IHΓ.
-    prove_f_prod_eq; solve_category_eq.
+    solve_category_eq.
     apply compose_var_denot_rename_denot.
 Qed.
 
@@ -101,11 +101,10 @@ subst_denot (fun _ var => var_to_term _ (var_to_var _ var))
 = compose (rename_denot var_to_var) (subst_denot var_to_term).
 Proof.
   induction Γ.
-  + simpl. 
-    apply terminal_uniq.
+  + solve_category_eq.
   + simpl.
     rewrite IHΓ.
-    prove_f_prod_eq; solve_category_eq.
+    solve_category_eq.
     apply subst_rename_helper.
 Qed.
 
@@ -130,7 +129,7 @@ Proof.
   + simpl.
     f_equal.
     rewrite var_succ_denot.
-    prove_f_prod_eq; solve_category_eq.
+    solve_category_eq.
 Qed.
 
 Definition ext_ctx_denot
@@ -175,7 +174,7 @@ tm_denot (subst ρ e) = compose (tm_denot e) (subst_denot ρ).
 Proof.
   intros C HC HT HP HE HCC Γ t e.
   dependent induction e; intros; simpl.
-  + apply terminal_uniq.
+  + solve_category_eq.
   + rewrite IHe1.
     rewrite IHe2.
     apply prod_map_comp_distr.
@@ -201,8 +200,7 @@ Theorem soundness : ∀ {C} `{CartesianClosed C} {Γ t} {e1 e2 : term Γ t},
     eqn_in_context e1 e2 → tm_denot e1 = tm_denot e2.
 Proof.
   intros C Hc Ht Hp He Hcc Γ t e1 e2 Heq.
-  induction Heq.
-  + reflexivity.
+  induction Heq; try solve_category_eq.
   + rewrite IHHeq.
     reflexivity.
   + rewrite IHHeq1.
@@ -227,11 +225,6 @@ Proof.
     apply curry_uniq.
     f_equal.
     unfold prod_map.
-    rewrite compose_id_l.
-    reflexivity.
-  + apply f_prod_comm1.
-  + apply f_prod_comm2.
-  + simpl.
-    symmetry.
-    apply f_prod_uniq; reflexivity.
+    solve_category_eq.
+  + solve_category_eq.
 Qed.

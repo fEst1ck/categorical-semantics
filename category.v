@@ -106,12 +106,14 @@ Class HasProduct C `{Category C} := {
 
 Ltac prove_f_prod_eq :=
   match goal with
+  | |- f_prod _ _ = f_prod _ _ =>
+    try reflexivity;
+    f_equal
   | |- f_prod _ _ = _ =>
     symmetry;
     apply f_prod_uniq
   | |- _ = f_prod _ _ =>
       apply f_prod_uniq
-  | _ => idtac "Goal is not an equation involving f_prod"
   end.
 
 Lemma f_prod_uniq1 {C} `{HasProduct C}
@@ -193,10 +195,14 @@ Ltac terminal_eq :=
   | _ => idtac
   end.
 
-Ltac solve_category_eq :=
+Ltac solve_category_eq1 :=
   simplify_terms;
   terminal_eq;
   try reflexivity.
+
+Ltac solve_category_eq :=
+  solve_category_eq1 ||
+  (prove_f_prod_eq; solve_category_eq1).
 
 Lemma prod_map_comp_distr :
 ∀ {C} `{HasProduct C} {W X Y Z: C}
