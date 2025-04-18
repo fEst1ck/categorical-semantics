@@ -64,3 +64,32 @@ Proof.
     }
     apply eval.
 Defined.
+
+(* In Set category *)
+Example ty1 : type := unit_type.
+Eval compute in ty_denot ty1.
+
+Example ty2 : type := arrow_type unit_type unit_type.
+Eval compute in ty_denot ty2.
+
+Example ty3 : type := prod_type unit_type unit_type.
+Eval compute in ty_denot ty3.
+
+Example ctx1 : context := context_cons unit_type empty_context.
+Eval compute in ctx_denot ctx1.
+
+Example ctx2 : context := context_cons (arrow_type unit_type unit_type) ctx1.
+Eval compute in ctx_denot ctx2.
+
+Example var : contains ctx2 unit_type := var_succ var_zero.
+Eval cbn in var_denot var.
+
+(* The identity function on unit type *)
+Example id_term : term empty_context (arrow_type unit_type unit_type) :=
+  abs_term (var_term var_zero).
+Eval compute in tm_denot id_term.
+
+(* ((), #1) *)
+Example pair_term : term ctx2 (prod_type unit_type unit_type) :=
+  pair_term unit_term (var_term (var_succ var_zero)).
+Eval compute in tm_denot pair_term.
