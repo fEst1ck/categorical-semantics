@@ -128,14 +128,9 @@ Lemma compose_var_denot_rename_denot :
 compose (var_denot x) (rename_denot g) = var_denot (g t x).
 Proof.
   intros.
-  dependent induction x.
-  + simpl.
-    apply f_prod_comm2.
-  + simpl.
-    rewrite compose_assoc.
-    rewrite f_prod_comm1.
-    rewrite IHx.
-    reflexivity.
+  dependent induction x; solve_category_eq.
+  rewrite IHx.
+  reflexivity.
 Qed.
 
 Lemma rename_denot_comp :
@@ -147,18 +142,11 @@ rename_denot (fun t x => g t (f t x)) = compose (rename_denot f) (rename_denot g
 Proof.
   intros.
   dependent induction Γ.
-  + simpl.
-    apply terminal_uniq.
+  + solve_category_eq.
   + simpl.
     rewrite IHΓ.
-    symmetry.
-    apply f_prod_uniq.
-    - rewrite <- compose_assoc.
-      rewrite f_prod_comm1.
-      reflexivity.
-    - rewrite <- compose_assoc.
-      rewrite f_prod_comm2.
-      apply compose_var_denot_rename_denot.
+    prove_f_prod_eq; solve_category_eq.
+    apply compose_var_denot_rename_denot.
 Qed.
 
 Fixpoint ctx_cons_n Γ t n : context :=
@@ -199,37 +187,11 @@ Proof.
   + simpl.
     apply terminal_uniq.
   + simpl.
-    symmetry.
-    apply f_prod_uniq.
+    prove_f_prod_eq.
     - rewrite rename_denot_comp with (f := fun _ x => @var_succ _ _ _ x) (g := fun _ x => @var_succ _ _ _ x).
       rewrite IHΓ.
       f_equal.
-      rewrite IHΓ.
-      rewrite rename_denot_id.
-      reflexivity.
-    - reflexivity.
-Qed.
-
-Fixpoint rename_denot_id
-{C} `{CartesianClosed C}
-{Γ t'} {struct Γ}:
-(rename_denot (fun t (x : contains Γ t) => @var_succ _ _ t' x) = fst).
-Proof.
-  intros.
-  dependent induction Γ.
-  + simpl.
-    apply terminal_uniq.
-  + simpl.
-    symmetry.
-    apply f_prod_uniq.
-    - rewrite rename_denot_comp with (f := fun _ x => @var_succ _ _ _ x) (g := fun _ x => @var_succ _ _ _ x).
-      rewrite IHΓ.
-      f_equal.
-      rewrite IHΓ.
-      rewrite rename_denot_id.
-      reflexivity.
-    - reflexivity.
-Qed.
+Admitted.
 
 Fixpoint subst_denot {C} `{CartesianClosed C}
 {Γ Δ : context} (ρ : ∀ t, contains Γ t → term Δ t) {struct Γ}:
@@ -305,13 +267,7 @@ Lemma subst_rename_helper
 compose (var_denot x) (subst_denot var_to_term) =
 tm_denot (var_to_term t x).
 Proof.
-  dependent induction x.
-  + simpl.
-    apply f_prod_comm2.
-  + simpl.
-    rewrite compose_assoc.
-    rewrite f_prod_comm1.
-    apply IHx.
+  dependent induction x; solve_category_eq; auto.
 Qed.
 
 Lemma subst_rename
@@ -330,14 +286,8 @@ Proof.
     apply terminal_uniq.
   + simpl.
     rewrite IHΓ.
-    symmetry.
-    apply f_prod_uniq.
-    - rewrite <- compose_assoc.
-      rewrite f_prod_comm1.
-      reflexivity.
-    - rewrite <- compose_assoc.
-      rewrite f_prod_comm2.
-      apply subst_rename_helper.
+    prove_f_prod_eq; solve_category_eq.
+    apply subst_rename_helper.
 Qed.
 
 Lemma var_succ_denot :
@@ -350,8 +300,7 @@ Proof.
   + simpl.
     apply terminal_uniq.
   + simpl.
-    symmetry.
-    apply f_prod_uniq.
+    prove_f_prod_eq.
     2:{ reflexivity. }
     rewrite subst_rename with (var_to_term := fun _ x => var_term (var_succ x)).
     f_equal.
@@ -374,12 +323,7 @@ Proof.
   + simpl.
     f_equal.
     rewrite var_succ_denot.
-    symmetry.
-    apply f_prod_uniq.
-    - rewrite compose_id_r.
-      reflexivity.
-    - rewrite compose_id_r.
-      reflexivity.
+    prove_f_prod_eq; solve_category_eq.
 Qed.
 
 Definition ext_ctx_denot
@@ -400,13 +344,7 @@ Lemma denot_comp :
 tm_denot (ρ t c) = compose (var_denot c) (subst_denot ρ).
 Proof.
   intros.
-  induction c.
-  + simpl.
-    rewrite f_prod_comm2.
-    reflexivity.
-  + simpl.
-    rewrite compose_assoc.
-    rewrite f_prod_comm1.
+  induction c; solve_category_eq.
     rewrite <- IHc.
     reflexivity.
 Qed.
@@ -429,30 +367,23 @@ Lemma subst_denot_decomp:
 tm_denot (subst ρ e) = compose (tm_denot e) (subst_denot ρ).
 Proof.
   intros C HC HT HP HE HCC Γ t e.
-  dependent induction e; intros.
-  + simpl.
-    apply terminal_uniq.
-  + simpl.
-    rewrite IHe1.
+  dependent induction e; intros; simpl.
+  + apply terminal_uniq.
+  + rewrite IHe1.
     rewrite IHe2.
     apply prod_map_comp_distr.
-  + simpl.
-    rewrite IHe.
+  + rewrite IHe.
     rewrite compose_assoc.
     reflexivity.
-  + simpl.
-    rewrite IHe.
+  + rewrite IHe.
     rewrite compose_assoc.
     reflexivity.
-  + simpl.
-    apply denot_comp.
-  + simpl.
-    rewrite IHe.
+  + apply denot_comp.
+  + rewrite IHe.
     rewrite ext_subst_denot.
     rewrite <- curry_subst.
     reflexivity.
-  + simpl.
-    rewrite IHe1.
+  + rewrite IHe1.
     rewrite IHe2.
     rewrite compose_assoc.
     f_equal.
@@ -476,7 +407,7 @@ Proof.
   + simpl.
     rewrite IHHeq.
     reflexivity.
-  + unfold app.
+  + unfold stlc.app.
     simpl.
     rewrite subst_denot_decomp.
     rewrite subst1_map_denot.

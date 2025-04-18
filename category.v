@@ -104,6 +104,16 @@ Class HasProduct C `{Category C} := {
     compose fst h = f → compose snd h = g → h = f_prod f g;
 }.
 
+Ltac prove_f_prod_eq :=
+  match goal with
+  | |- f_prod _ _ = _ =>
+    symmetry;
+    apply f_prod_uniq
+  | |- _ = f_prod _ _ =>
+      apply f_prod_uniq
+  | _ => idtac "Goal is not an equation involving f_prod"
+  end.
+
 Lemma f_prod_uniq1 {C} `{HasProduct C}
   {X Y Z}
   (f g : Hom Z (product X Y)) :
@@ -113,13 +123,80 @@ Lemma f_prod_uniq1 {C} `{HasProduct C}
 Proof.
   intros.
   apply (eq_trans (f_prod_uniq (compose fst f) (compose snd f) f eq_refl eq_refl)).
-  symmetry.
-  apply f_prod_uniq; auto.
+  prove_f_prod_eq; auto.
 Qed.
 
 Definition prod_map {C} `{HasProduct C} {X Y Z W : C}
 (f : Hom X Y) (g : Hom Z W) : Hom (product X Z) (product Y W) :=
   f_prod (compose f fst) (compose g snd).
+
+  Ltac bubble_fst_to_fprod :=
+  match goal with
+  | |- context [compose fst ?e] =>
+    match e with
+    | f_prod _ _ => idtac "already at f_prod"
+    | compose ?f ?g =>
+      match f with
+      | f_prod _ _ => 
+        rewrite <- compose_assoc;
+        idtac "rewrote compose_assoc"
+      | _ =>
+        idtac "inner f not f_prod"
+      end
+    | _ => idtac "not a compose"
+    end
+  | |- context [compose (compose _ fst) (f_prod _ _)] =>
+    rewrite compose_assoc
+  | _ => idtac "didn't match context"
+  end.
+
+  Ltac bubble_snd_to_fprod :=
+  match goal with
+  | |- context [compose snd ?e] =>
+    match e with
+    | f_prod _ _ => idtac "already at f_prod"
+    | compose ?f ?g =>
+      match f with
+      | f_prod _ _ => 
+        rewrite <- compose_assoc;
+        idtac "rewrote compose_assoc"
+      end
+    | _ =>
+      idtac "inner f not f_prod"
+    end
+  | _ => idtac "not a compose"
+  end.
+
+Ltac simplify_id :=
+  match goal with
+  | |- compose ?f (id _) = _ => rewrite compose_id_r
+  | |- compose (id _) ?f = _ => rewrite compose_id_l
+  | |- _ = compose ?f (id _) => rewrite compose_id_r
+  | |- _ = compose (id _) ?f => rewrite compose_id_l
+  | |- context [compose ?f (id _)] => rewrite compose_id_r
+  | |- context [compose (id _) ?f] => rewrite compose_id_l
+  | _ => idtac
+  end.
+
+Ltac simplify_terms :=
+  simpl;
+  repeat simplify_id;
+  bubble_fst_to_fprod; try rewrite f_prod_comm1;
+  bubble_snd_to_fprod; try rewrite f_prod_comm2.
+
+Ltac terminal_eq :=
+  match goal with
+  | |- terminal_map = _=>
+    apply terminal_uniq
+  | |- _ = terminal_map _ =>
+    symmetry; apply terminal_uniq
+  | _ => idtac
+  end.
+
+Ltac solve_category_eq :=
+  simplify_terms;
+  terminal_eq;
+  try reflexivity.
 
 Lemma prod_map_comp_distr :
 ∀ {C} `{HasProduct C} {W X Y Z: C}
@@ -127,17 +204,7 @@ Lemma prod_map_comp_distr :
 f_prod (compose f h) (compose g h) = compose (f_prod f g) h.
 Proof.
   intros.
-  erewrite f_prod_uniq with (f := compose f h) (g := compose g h).
-  3:{
-    rewrite <- compose_assoc.
-    rewrite f_prod_comm2.
-    reflexivity.
-  }
-  2:{
-    rewrite <- compose_assoc.
-    rewrite f_prod_comm1.
-    reflexivity.
-  }
+  erewrite f_prod_uniq with (f := compose f h) (g := compose g h) by solve_category_eq.
   reflexivity.
 Qed.
 
@@ -151,7 +218,7 @@ Proof.
   eapply f_prod_uniq.
   + rewrite <- compose_assoc.
     unfold prod_map.
-    rewrite f_prod_comm1.
+    simplify_terms.
     rewrite compose_assoc.
     rewrite f_prod_comm1.
     rewrite compose_assoc.
