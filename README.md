@@ -3,7 +3,7 @@
 We formalize in Coq:
 - an equational theory of the simply typed lambda calculus (STLC)
 - just enough category theory
-- sound models of STLC in Cartesian closed categories (WIP)
+- sound models of STLC in Cartesian closed categories
 
 This was my course project of graduate level course [CS 747, Formal Reasoning with Proof Assistants](https://cs.uwaterloo.ca/~yizhou/courses/cs747-2025wi/), given at University of Waterloo by Yizhou Zhang, 2025 Winter.
 
