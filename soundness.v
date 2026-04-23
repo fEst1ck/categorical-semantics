@@ -195,113 +195,55 @@ Proof.
   reflexivity.
 Qed.
 
-(* Renaming with an extra var_succ on the output:
-   `rename_denot (λ x. var_succ (ρ x)) = rename_denot ρ ∘ fst`. *)
-Lemma rename_var_succ_denot
-{C} `{CartesianClosed C}
-{Γ Δ} {t'} (ρ : ∀ t, contains Γ t → contains Δ t):
-@rename_denot _ _ _ _ _ _ Γ (context_cons t' Δ) (fun t x => var_succ (ρ t x))
-= compose (rename_denot ρ) fst.
+(* A renaming denotes the same as its promotion to a substitution. This
+   bridges `rename_denot` and `subst_denot`, letting the existing
+   substitution-flavored structural lemmas serve double duty. *)
+Lemma rename_as_subst {C} `{CartesianClosed C}
+{Γ Δ} (ρ : ∀ t, contains Γ t → contains Δ t):
+rename_denot ρ = subst_denot (fun t x => var_term (ρ t x)).
 Proof.
-  revert Δ t' ρ.
-  induction Γ; intros.
-  + simpl. symmetry. apply terminal_uniq.
-  + simpl.
-    rewrite <- prod_map_comp_distr.
-    f_equal.
-    apply IHΓ.
-Qed.
-
-(* `rename_denot` of the identity variable map is the identity. *)
-Lemma rename_denot_id
-{C} `{CartesianClosed C}
-{Γ}:
-@rename_denot _ _ _ _ _ _ Γ Γ (fun _ x => x) = id _.
-Proof.
-  induction Γ.
-  + simpl. apply terminal_obj_map.
-  + simpl.
-    rewrite (rename_var_succ_denot (fun _ x => x)).
-    rewrite IHΓ.
-    rewrite compose_id_l.
-    symmetry.
-    apply f_prod_uniq; apply compose_id_r.
-Qed.
-
-(* The weakening renaming `var_succ` denotes `fst`. *)
-Lemma rename_denot_shift
-{C} `{CartesianClosed C}
-{Γ} {t'}:
-@rename_denot _ _ _ _ _ _ Γ (context_cons t' Γ) (fun _ y => var_succ y) = fst.
-Proof.
-  rewrite (rename_var_succ_denot (fun _ y => y)).
-  rewrite rename_denot_id.
-  apply compose_id_l.
+  revert Δ ρ; induction Γ; intros; simpl; [reflexivity | f_equal; apply IHΓ].
 Qed.
 
 (* Renaming commutes with term denotation. *)
-Lemma rename_tm_denot
-{C} `{CartesianClosed C}
+Lemma rename_tm_denot {C} `{CartesianClosed C}
 {Γ t} (e : term Γ t):
 ∀ {Δ} (ρ : ∀ t, contains Γ t → contains Δ t),
 tm_denot (rename ρ e) = compose (tm_denot e) (rename_denot ρ).
 Proof.
   dependent induction e; intros; cbn.
   + apply terminal_uniq.
-  + rewrite IHe1, IHe2.
-    apply prod_map_comp_distr.
-  + rewrite IHe. symmetry. apply compose_assoc.
-  + rewrite IHe. symmetry. apply compose_assoc.
-  + symmetry. apply compose_var_denot_rename_denot.
-  + rewrite IHe.
-    rewrite <- curry_subst.
-    do 2 f_equal.
-    cbn.
-    unfold prod_map.
-    rewrite compose_id_l.
-    f_equal.
-    apply rename_var_succ_denot.
-  + rewrite IHe1, IHe2.
-    rewrite compose_assoc.
-    f_equal.
-    apply prod_map_comp_distr.
+  + rewrite IHe1, IHe2; apply prod_map_comp_distr.
+  + rewrite IHe; symmetry; apply compose_assoc.
+  + rewrite IHe; symmetry; apply compose_assoc.
+  + symmetry; apply compose_var_denot_rename_denot.
+  + rewrite IHe, <- curry_subst; do 2 f_equal.
+    cbn; unfold prod_map;
+      rewrite compose_id_l, !rename_as_subst, subst_denot_var_succ_comp.
+    reflexivity.
+  + rewrite IHe1, IHe2, compose_assoc; f_equal; apply prod_map_comp_distr.
 Qed.
 
-(* A substitution composed with a post-renaming: substitute-then-rename.
-   `subst_denot (λ x. rename σ (ρ x)) = subst_denot ρ ∘ rename_denot σ`. *)
-Lemma subst_rename_denot
-{C} `{CartesianClosed C}
-{Γ Δ Ω}
-(ρ_sub : ∀ t, contains Γ t → term Δ t)
+(* Substitute-then-rename: `subst_denot (λ x. rename σ (ρ x)) = subst_denot ρ ∘ rename_denot σ`. *)
+Lemma subst_rename_denot {C} `{CartesianClosed C}
+{Γ Δ Ω} (ρ_sub : ∀ t, contains Γ t → term Δ t)
 (ρ_ren : ∀ t, contains Δ t → contains Ω t):
-@subst_denot _ _ _ _ _ _ Γ Ω (fun t x => rename ρ_ren (ρ_sub t x))
+subst_denot (fun t x => rename ρ_ren (ρ_sub t x))
 = compose (subst_denot ρ_sub) (rename_denot ρ_ren).
 Proof.
-  revert Δ Ω ρ_sub ρ_ren.
-  induction Γ; intros.
-  + simpl. symmetry. apply terminal_uniq.
-  + simpl.
-    rewrite <- prod_map_comp_distr.
-    f_equal.
-    - apply IHΓ.
-    - apply rename_tm_denot.
+  revert Δ Ω ρ_sub ρ_ren; induction Γ; intros; simpl.
+  + symmetry; apply terminal_uniq.
+  + rewrite <- prod_map_comp_distr; f_equal;
+      [apply IHΓ | apply rename_tm_denot].
 Qed.
 
-Lemma ext_subst_denot
-{C} `{CartesianClosed C}
-{Γ Δ}
-{t'}
-(ρ : ∀ t : type, contains Γ t → term Δ t):
+Lemma ext_subst_denot {C} `{CartesianClosed C}
+{Γ Δ} {t'} (ρ : ∀ t : type, contains Γ t → term Δ t):
 subst_denot (exts ρ t') = ext_ctx_denot (subst_denot ρ).
 Proof.
-  unfold ext_ctx_denot.
-  cbn.
-  unfold prod_map.
-  rewrite compose_id_l.
-  f_equal.
-  rewrite subst_rename_denot.
-  f_equal.
-  apply rename_denot_shift.
+  unfold ext_ctx_denot; cbn; unfold prod_map; rewrite compose_id_l.
+  f_equal; rewrite subst_rename_denot, rename_as_subst, var_succ_denot.
+  reflexivity.
 Qed.
 
 Lemma subst_denot_decomp:
