@@ -108,12 +108,52 @@ Proof.
     apply subst_rename_helper.
 Qed.
 
+Lemma subst_denot_var_succ_comp :
+∀ {C} `{CartesianClosed C}
+{Γ Δ t}
+(ρ : ∀ t0, contains Γ t0 → contains Δ t0),
+@subst_denot _ _ _ _ _ _ Γ (context_cons t Δ)
+  (fun _ x => var_term (var_succ (ρ _ x))) =
+compose (@subst_denot _ _ _ _ _ _ Γ Δ (fun _ x => var_term (ρ _ x))) fst.
+Proof.
+  intros C Hc Ht Hp He Hcc Γ Δ t ρ.
+  induction Γ.
+  - simpl.
+    apply terminal_uniq.
+  - simpl.
+    rewrite IHΓ.
+    rewrite <- prod_map_comp_distr.
+    simpl.
+    reflexivity.
+Qed.
+
+Lemma subst_denot_var_term_id :
+∀ {C} `{CartesianClosed C}
+{Γ},
+@subst_denot _ _ _ _ _ _ Γ Γ (fun _ x => var_term x) = id _.
+Proof.
+  intros C Hc Ht Hp He Hcc Γ.
+  induction Γ.
+  - simpl.
+    apply terminal_obj_map.
+  - simpl.
+    rewrite (@subst_denot_var_succ_comp C Hc Ht Hp He Hcc Γ Γ t (fun _ x => x)).
+    rewrite IHΓ.
+    rewrite compose_id_l.
+    symmetry.
+    apply f_prod_uniq; solve_category_eq.
+Qed.
+
 Lemma var_succ_denot :
 ∀ {C} `{CartesianClosed C}
 {Γ t},
 @subst_denot _ _ _ _ _ _ Γ (context_cons t Γ) (fun _ x => (var_term (var_succ x))) = fst.
 Proof.
-Admitted.
+  intros C Hc Ht Hp He Hcc Γ t.
+  rewrite (@subst_denot_var_succ_comp C Hc Ht Hp He Hcc Γ Γ t (fun _ x => x)).
+  rewrite subst_denot_var_term_id.
+  solve_category_eq.
+Qed.
 
 Lemma subst1_map_denot :
 ∀ {C} `{CartesianClosed C}
